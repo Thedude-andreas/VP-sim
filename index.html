@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VP-simulator</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="sim-shell">
+      <section class="windscreen" aria-label="Vy genom vindrutan">
+        <canvas id="outside-view" width="1280" height="560"></canvas>
+        <div class="status-strip">
+          <div>
+            <span class="label">Fas</span>
+            <strong id="phase-readout">Uppställning</strong>
+          </div>
+          <div>
+            <span class="label">Trimläge</span>
+            <strong id="power-readout">Idle</strong>
+          </div>
+          <div>
+            <span class="label">Feedback</span>
+            <strong id="feedback-readout">Sätt takeoff power</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="instrument-panel" aria-label="Instrumentpanel och reglage">
+        <div class="gauge-grid" aria-label="Flyginstrument">
+          <article class="gauge" data-gauge="asi">
+            <div class="gauge-title">Airspeed</div>
+            <div class="dial">
+              <div class="dial-mark mark-0">0</div>
+              <div class="dial-mark mark-1">40</div>
+              <div class="dial-mark mark-2">80</div>
+              <div class="dial-mark mark-3">120</div>
+              <div class="needle" id="asi-needle"></div>
+              <div class="hub"></div>
+            </div>
+            <div class="digital"><span id="airspeed">0</span> kt</div>
+          </article>
+
+          <article class="gauge" data-gauge="altimeter">
+            <div class="gauge-title">Altimeter</div>
+            <div class="dial">
+              <div class="dial-mark mark-0">0</div>
+              <div class="dial-mark mark-1">1</div>
+              <div class="dial-mark mark-2">2</div>
+              <div class="dial-mark mark-3">3</div>
+              <div class="needle" id="alt-needle"></div>
+              <div class="hub"></div>
+            </div>
+            <div class="digital"><span id="altitude">0</span> ft</div>
+          </article>
+
+          <article class="engine-card">
+            <div class="engine-header">
+              <span>Manifold</span>
+              <strong><span id="map">11.8</span> inHg</strong>
+            </div>
+            <meter id="map-meter" min="10" max="30" value="11.8"></meter>
+            <div class="engine-header">
+              <span>RPM</span>
+              <strong><span id="rpm">700</span></strong>
+            </div>
+            <meter id="rpm-meter" min="600" max="2800" value="700"></meter>
+            <div class="engine-header">
+              <span>EGT</span>
+              <strong><span id="egt">950</span> F</strong>
+            </div>
+            <meter id="egt-meter" min="850" max="1550" value="950"></meter>
+          </article>
+        </div>
+
+        <div class="controls-area">
+          <section class="lever-quadrant" aria-label="Motorreglage">
+            <label class="lever throttle">
+              <span>Trottel</span>
+              <input id="throttle" type="range" min="0" max="100" value="0" orient="vertical">
+              <output id="throttle-out">0%</output>
+            </label>
+            <label class="lever prop">
+              <span>Propeller</span>
+              <input id="prop" type="range" min="0" max="100" value="100" orient="vertical">
+              <output id="prop-out">100%</output>
+            </label>
+            <label class="lever mixture">
+              <span>Magring</span>
+              <input id="mixture" type="range" min="0" max="100" value="100" orient="vertical">
+              <output id="mixture-out">Rik</output>
+            </label>
+            <label class="carb-heat">
+              <span>Förgasarvärme</span>
+              <button id="carb-heat" type="button" aria-pressed="false">Av</button>
+            </label>
+          </section>
+
+          <section class="procedure-card" aria-label="Träningsprocedur">
+            <div class="procedure-head">
+              <h1>VP-procedur</h1>
+              <div class="procedure-actions">
+                <button id="sound-toggle" type="button" aria-pressed="false">Ljud av</button>
+                <button id="reset" type="button">Starta om</button>
+              </div>
+            </div>
+            <ol id="procedure-list">
+              <li data-step="takeoff">Takeoff: full rik, prop full fram, carb heat av, trottel full.</li>
+              <li data-step="climb">Efter rotation: håll takeoff power och etablera stigfart.</li>
+              <li data-step="cruise">Cruise: reducera trottel till 23 inHg och prop till 2300 RPM, magra mot peak EGT.</li>
+              <li data-step="approach">Approach: carb heat på, prop full fram, reducera till approach power.</li>
+            </ol>
+            <div class="target-box">
+              <span class="label">Aktivt mål</span>
+              <strong id="target-readout">Full rik, prop fram, carb heat av, trottel full</strong>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
