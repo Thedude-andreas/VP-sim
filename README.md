@@ -4,6 +4,7 @@ En fristående webbaserad procedur-simulator för grundläggande VP-träning i A
 
 Öppna `index.html` direkt i en webbläsare. Ingen build, server, deploy eller extern tjänst krävs.
 Simulatorn är optimerad för mobil fullscreen i liggande läge.
+Vid deploy ska `.htaccess` följa med så one.com inte serverar gamla HTML/CSS/JS från cache.
 
 ## Första versionens fokus
 
