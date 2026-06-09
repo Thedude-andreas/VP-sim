@@ -2,12 +2,19 @@
 <html lang="sv">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <title>VP-simulator</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <main class="sim-shell">
+      <div class="orientation-hint" aria-hidden="true">
+        <strong>Vrid till liggande läge</strong>
+        <span>Simulatorn är optimerad för fullscreen i landskap.</span>
+      </div>
+
       <section class="windscreen" aria-label="Vy genom vindrutan">
         <canvas id="outside-view" width="1280" height="560"></canvas>
         <div class="status-strip">
@@ -43,33 +50,43 @@
 
           <article class="gauge" data-gauge="altimeter">
             <div class="gauge-title">Altimeter</div>
-            <div class="dial">
-              <div class="dial-mark mark-0">0</div>
-              <div class="dial-mark mark-1">1</div>
-              <div class="dial-mark mark-2">2</div>
-              <div class="dial-mark mark-3">3</div>
-              <div class="needle" id="alt-needle"></div>
+            <div class="dial altimeter-dial">
+              <div class="alt-number alt-0">0</div>
+              <div class="alt-number alt-1">1</div>
+              <div class="alt-number alt-2">2</div>
+              <div class="alt-number alt-3">3</div>
+              <div class="alt-number alt-4">4</div>
+              <div class="alt-number alt-5">5</div>
+              <div class="alt-number alt-6">6</div>
+              <div class="alt-number alt-7">7</div>
+              <div class="alt-number alt-8">8</div>
+              <div class="alt-number alt-9">9</div>
+              <div class="needle alt-hundreds" id="alt-hundreds-needle"></div>
+              <div class="needle alt-thousands" id="alt-thousands-needle"></div>
               <div class="hub"></div>
             </div>
             <div class="digital"><span id="altitude">0</span> ft</div>
           </article>
 
           <article class="engine-card">
-            <div class="engine-header">
+            <div class="engine-readout map-readout">
               <span>Manifold</span>
               <strong><span id="map">11.8</span> inHg</strong>
+              <meter id="map-meter" min="10" max="30" value="11.8"></meter>
             </div>
-            <meter id="map-meter" min="10" max="30" value="11.8"></meter>
-            <div class="engine-header">
+
+            <div class="rpm-lcd">
               <span>RPM</span>
               <strong><span id="rpm">700</span></strong>
+              <meter id="rpm-meter" min="600" max="2800" value="700"></meter>
             </div>
-            <meter id="rpm-meter" min="600" max="2800" value="700"></meter>
-            <div class="engine-header">
+
+            <div class="egt-lcd">
               <span>EGT</span>
-              <strong><span id="egt">950</span> F</strong>
+              <strong><span id="egt">950</span></strong>
+              <small>F</small>
+              <meter id="egt-meter" min="850" max="1550" value="950"></meter>
             </div>
-            <meter id="egt-meter" min="850" max="1550" value="950"></meter>
           </article>
         </div>
 
@@ -77,17 +94,32 @@
           <section class="lever-quadrant" aria-label="Motorreglage">
             <label class="lever throttle">
               <span>Trottel</span>
-              <input id="throttle" type="range" min="0" max="100" value="0" orient="vertical">
+              <div class="control-visual throttle-visual">
+                <div class="lever-slot"></div>
+                <div class="throttle-arm"></div>
+                <div class="throttle-knob"></div>
+                <input id="throttle" type="range" min="0" max="100" value="0" orient="vertical">
+              </div>
               <output id="throttle-out">0%</output>
             </label>
             <label class="lever prop">
               <span>Propeller</span>
-              <input id="prop" type="range" min="0" max="100" value="100" orient="vertical">
+              <div class="control-visual push-pull prop-visual">
+                <div class="push-pull-rail"></div>
+                <div class="push-pull-shaft"></div>
+                <div class="push-pull-knob"></div>
+                <input id="prop" type="range" min="0" max="100" value="100" orient="vertical">
+              </div>
               <output id="prop-out">100%</output>
             </label>
             <label class="lever mixture">
               <span>Magring</span>
-              <input id="mixture" type="range" min="0" max="100" value="100" orient="vertical">
+              <div class="control-visual push-pull mixture-visual">
+                <div class="push-pull-rail"></div>
+                <div class="push-pull-shaft"></div>
+                <div class="push-pull-knob"></div>
+                <input id="mixture" type="range" min="0" max="100" value="100" orient="vertical">
+              </div>
               <output id="mixture-out">Rik</output>
             </label>
             <label class="carb-heat">
@@ -100,6 +132,7 @@
             <div class="procedure-head">
               <h1>VP-procedur</h1>
               <div class="procedure-actions">
+                <button id="fullscreen-toggle" type="button">Fullskärm</button>
                 <button id="sound-toggle" type="button" aria-pressed="false">Ljud av</button>
                 <button id="reset" type="button">Starta om</button>
               </div>

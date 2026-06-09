@@ -6,6 +6,7 @@ const controls = {
   prop: document.querySelector("#prop"),
   mixture: document.querySelector("#mixture"),
   carbHeat: document.querySelector("#carb-heat"),
+  fullscreenToggle: document.querySelector("#fullscreen-toggle"),
   soundToggle: document.querySelector("#sound-toggle"),
   reset: document.querySelector("#reset"),
 };
@@ -27,7 +28,8 @@ const readouts = {
   rpmMeter: document.querySelector("#rpm-meter"),
   egtMeter: document.querySelector("#egt-meter"),
   asiNeedle: document.querySelector("#asi-needle"),
-  altNeedle: document.querySelector("#alt-needle"),
+  altHundredsNeedle: document.querySelector("#alt-hundreds-needle"),
+  altThousandsNeedle: document.querySelector("#alt-thousands-needle"),
   steps: [...document.querySelectorAll("#procedure-list li")],
 };
 
@@ -65,6 +67,25 @@ controls.carbHeat.addEventListener("click", () => {
   state.carbHeatOn = !state.carbHeatOn;
   controls.carbHeat.setAttribute("aria-pressed", String(state.carbHeatOn));
   controls.carbHeat.textContent = state.carbHeatOn ? "På" : "Av";
+});
+
+controls.fullscreenToggle.addEventListener("click", async () => {
+  try {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen();
+      if (screen.orientation?.lock) {
+        await screen.orientation.lock("landscape").catch(() => undefined);
+      }
+    } else {
+      await document.exitFullscreen();
+    }
+  } catch {
+    controls.fullscreenToggle.textContent = "Öppna i helskärm";
+  }
+});
+
+document.addEventListener("fullscreenchange", () => {
+  controls.fullscreenToggle.textContent = document.fullscreenElement ? "Lämna" : "Fullskärm";
 });
 
 controls.soundToggle.addEventListener("click", async () => {
@@ -357,6 +378,9 @@ function updateReadouts(engine, mode) {
   readouts.throttle.textContent = `${Math.round(engine.throttle * 100)}%`;
   readouts.prop.textContent = `${Math.round(engine.prop * 100)}%`;
   readouts.mixture.textContent = engine.mixture > 0.92 ? "Rik" : `${Math.round(engine.mixture * 100)}%`;
+  controls.throttle.closest(".lever").style.setProperty("--control-pct", engine.throttle);
+  controls.prop.closest(".lever").style.setProperty("--control-pct", engine.prop);
+  controls.mixture.closest(".lever").style.setProperty("--control-pct", engine.mixture);
 
   readouts.phase.textContent = mode.phase;
   readouts.power.textContent = mode.power;
@@ -373,9 +397,11 @@ function updateReadouts(engine, mode) {
   readouts.egtMeter.value = engine.egt;
 
   const asiDeg = -135 + clamp(state.speed / 130, 0, 1) * 270;
-  const altDeg = -135 + clamp((state.altitude % 3000) / 3000, 0, 1) * 270;
+  const altHundredsDeg = (state.altitude % 1000) / 1000 * 360;
+  const altThousandsDeg = (state.altitude % 10000) / 10000 * 360;
   readouts.asiNeedle.style.transform = `rotate(${asiDeg}deg)`;
-  readouts.altNeedle.style.transform = `rotate(${altDeg}deg)`;
+  readouts.altHundredsNeedle.style.transform = `rotate(${altHundredsDeg}deg)`;
+  readouts.altThousandsNeedle.style.transform = `rotate(${altThousandsDeg}deg)`;
 
   readouts.steps.forEach((step) => {
     const key = step.dataset.step;

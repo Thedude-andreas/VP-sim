@@ -3,6 +3,7 @@
 En fristående webbaserad procedur-simulator för grundläggande VP-träning i Aviat Husky A1B-kontext.
 
 Öppna `index.html` direkt i en webbläsare. Ingen build, server, deploy eller extern tjänst krävs.
+Simulatorn är optimerad för mobil fullscreen i liggande läge.
 
 ## Första versionens fokus
 
