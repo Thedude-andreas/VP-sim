@@ -622,7 +622,7 @@ output {
 
 .procedure-card {
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   gap: 6px;
   padding: 8px;
 }
@@ -664,9 +664,51 @@ h1 {
   color: #bdf1ce;
 }
 
-ol {
+.procedure-body {
+  min-height: 0;
+  overflow: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
+.memo-strip {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.memo-item {
+  min-width: 0;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 5px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  line-height: 1.15;
+}
+
+.memo-item span,
+.memo-item strong,
+.memo-item small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.memo-item strong {
+  color: var(--cream);
+  font-size: 0.66rem;
+}
+
+.memo-item small {
+  color: var(--muted);
+}
+
+.procedure-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 5px;
   margin: 0;
   padding: 0;
@@ -674,22 +716,46 @@ ol {
   list-style: none;
 }
 
-li {
+.procedure-group {
   min-width: 0;
   overflow: hidden;
   border-radius: 5px;
   background: rgba(255, 255, 255, 0.04);
   padding: 5px;
+}
+
+.procedure-group h2 {
+  margin: 0 0 4px;
+  color: var(--cream);
+  font-size: 0.62rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.procedure-group ul {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.procedure-group li {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 4px;
+  padding: 2px 3px;
   font-size: 0.62rem;
   line-height: 1.15;
 }
 
-li.active {
+.procedure-group.active-group {
+  border: 1px solid rgba(227, 182, 75, 0.5);
   color: var(--text);
   background: rgba(227, 182, 75, 0.16);
 }
 
-li.done {
+.procedure-group li.done {
   color: var(--green);
   background: rgba(72, 198, 129, 0.12);
 }
@@ -755,10 +821,14 @@ li.done {
   }
 
   .procedure-card {
-    grid-template-rows: auto auto;
+    grid-template-rows: auto minmax(58px, 1fr);
   }
 
-  ol {
+  .memo-strip {
+    display: none;
+  }
+
+  .procedure-card .target-box {
     display: none;
   }
 }
@@ -1010,32 +1080,81 @@ li.done {
     font-size: 0.88rem;
   }
 
-  ol {
+  .procedure-list {
     grid-template-columns: 1fr;
     gap: 8px;
     margin: 0;
-    padding-left: 22px;
+    padding: 0;
     color: var(--muted);
-    list-style: decimal;
     line-height: 1.35;
   }
 
-  li {
+  .procedure-group {
     overflow: visible;
-    background: transparent;
-    padding: 0 0 0 4px;
+    padding: 8px;
+  }
+
+  .procedure-group h2 {
+    font-size: 0.78rem;
+  }
+
+  .procedure-group li {
+    padding: 3px 4px;
     font-size: 1rem;
     line-height: 1.35;
+  }
+
+  .memo-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .memo-item {
+    padding: 6px 8px;
+    font-size: 0.72rem;
+  }
+
+  .memo-item strong {
+    font-size: 0.86rem;
   }
 }
 
 @media (min-width: 900px) and (max-height: 760px) {
-  .procedure-card {
-    grid-template-rows: auto auto;
+  .controls-area {
+    grid-template-rows: minmax(150px, 0.8fr) minmax(168px, 1fr);
   }
 
-  .procedure-card ol {
+  .lever input[type="range"] {
+    min-height: 116px;
+    max-height: 128px;
+  }
+
+  .control-visual {
+    min-height: 116px;
+    max-height: 128px;
+  }
+
+  .carb-heat button {
+    height: 78px;
+  }
+
+  .procedure-card {
+    grid-template-rows: auto minmax(52px, 1fr) auto;
+    gap: 6px;
+    padding: 10px;
+  }
+
+  .memo-strip {
     display: none;
+  }
+
+  .target-box {
+    padding: 7px 9px;
+  }
+
+  .target-box strong {
+    font-size: 0.78rem;
+    line-height: 1.15;
   }
 }
 

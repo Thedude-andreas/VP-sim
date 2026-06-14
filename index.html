@@ -6,7 +6,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <title>VP-simulator</title>
-    <link rel="stylesheet" href="styles.css?v=20260609-cache1">
+    <link rel="stylesheet" href="styles.css?v=20260614-procedures">
   </head>
   <body>
     <main class="sim-shell">
@@ -137,12 +137,7 @@
                 <button id="reset" type="button">Starta om</button>
               </div>
             </div>
-            <ol id="procedure-list">
-              <li data-step="takeoff">Takeoff: full rik, prop full fram, carb heat av, trottel full.</li>
-              <li data-step="climb">Efter rotation: håll takeoff power och etablera stigfart.</li>
-              <li data-step="cruise">Cruise: reducera trottel till 23 inHg och prop till 2300 RPM, magra mot peak EGT.</li>
-              <li data-step="approach">Approach: carb heat på, prop full fram, reducera till approach power.</li>
-            </ol>
+            <div class="procedure-body" id="procedure-body"></div>
             <div class="target-box">
               <span class="label">Aktivt mål</span>
               <strong id="target-readout">Full rik, prop fram, carb heat av, trottel full</strong>
@@ -152,6 +147,6 @@
       </section>
     </main>
 
-    <script src="app.js?v=20260609-cache1"></script>
+    <script src="app.js?v=20260614-procedures"></script>
   </body>
 </html>

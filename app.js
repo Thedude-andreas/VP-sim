@@ -30,7 +30,8 @@ const readouts = {
   asiNeedle: document.querySelector("#asi-needle"),
   altHundredsNeedle: document.querySelector("#alt-hundreds-needle"),
   altThousandsNeedle: document.querySelector("#alt-thousands-needle"),
-  steps: [...document.querySelectorAll("#procedure-list li")],
+  procedureBody: document.querySelector("#procedure-body"),
+  steps: [],
 };
 
 const state = {
@@ -56,12 +57,224 @@ const engineAudio = {
   noiseGain: null,
 };
 
+const performanceMemo = [
+  { label: "Vx Flaps 0", value: "61 mph", note: "Vid hinder i utflygningen" },
+  { label: "Vx Flaps 3", value: "55 mph", note: "Klaffhantering" },
+  { label: "Vy", value: "73 mph", note: "Normal stigfart, inflygningsfart" },
+  { label: "Vs Flaps 3", value: "52 mph", note: "Farligt nära Vx" },
+  { label: "Takeoff", value: "28\"/2650", note: "Full fräs" },
+  { label: "Climb", value: "24\"/2450", note: "23.8\"" },
+  { label: "Cruise", value: "21\"/2350", note: "20.6\"" },
+  { label: "EGT Peak", value: "1415°F", note: "" },
+  { label: "MTOW", value: "998 kg", note: "" },
+  { label: "Max tilläggsvikt", value: "236 kg", note: "" },
+  { label: "Fuel", value: "136 kg", note: "" },
+];
+
+const procedureGroups = [
+  {
+    id: "takeoff",
+    title: "Takeoff",
+    items: [
+      { key: "takeoffPower", text: "Full skatt med bullerskall. Reducera till CLIMB när allt är under kontroll." },
+      { key: "takeoffObs", text: "OBS! Avvakta om kapaciteten behövs för viktigare uppgifter." },
+      { key: "airspeedAlive", text: "Callout: Airspeed alive." },
+      { key: "noseLight", text: "IAS 40 mph: avlasta noshjulet." },
+      { key: "rotate", text: "Rotera." },
+      { key: "positiveRate", text: "Callout: Positive rate of climb." },
+      { key: "engineGreen", text: "Engine check: gröna värden." },
+    ],
+  },
+  {
+    id: "climb300",
+    title: "300 ft",
+    items: [
+      { key: "airspeedCheck", text: "Airspeed check -> Flaps 0." },
+      { key: "lightsOff", text: "LIGHTS OFF." },
+      { key: "climbSettings", text: "Climb settings: 24\"/2450." },
+    ],
+  },
+  {
+    id: "cruise",
+    title: "Cruise",
+    items: [
+      { key: "gearUp", text: "Gear UP." },
+      { key: "cruisePower", text: "Cruise: 21\"/2350 (20.6\")." },
+      { key: "mixtureCruise", text: "MIXTURE: EGT 1360°F." },
+    ],
+  },
+  {
+    id: "downwind",
+    title: "Downwind",
+    items: [
+      { key: "briefing", text: "Briefing: bränslenivå, bälten, västar, sättpunkt, pådragspunkt." },
+      { key: "gearCallout", text: "Gear callout: vad landar du på? UP WATER, 4 BLA." },
+      { key: "preheatTill", text: "Förvärmning TILL." },
+      { key: "reduceDownwind", text: "Reducera." },
+      { key: "flapsOne", text: "Flaps 1." },
+      { key: "lightsOn", text: "LIGHTS ON. Skräm måsarna!" },
+      { key: "downwindSpeed", text: "IAS 75 mph." },
+    ],
+  },
+  {
+    id: "base",
+    title: "Base",
+    items: [
+      { key: "flapsTwo", text: "Flaps 2." },
+    ],
+  },
+  {
+    id: "final",
+    title: "Final",
+    items: [
+      { key: "finalSpeed", text: "IAS 70 mph." },
+      { key: "flapsThree", text: "Flaps 3. Flaps 2 vid byiga vindar + 5 kt IAS." },
+      { key: "propIn", text: "PROP IN." },
+      { key: "preheatIn", text: "FÖRVÄRMNING IN." },
+      { key: "landingIn", text: "BLANDNING IN." },
+    ],
+  },
+  {
+    id: "shortFinal",
+    title: "Short Final",
+    items: [
+      { key: "under300", text: "<300 ft." },
+      { key: "stable", text: "Etablerad och stabiliserad, annars Go Around." },
+      { key: "threshold", text: "THR: 50 ft AGL, trädtoppar." },
+      { key: "thresholdSpeed", text: "IAS 65 mph." },
+    ],
+  },
+  {
+    id: "touchdown",
+    title: "Touch Down",
+    items: [
+      { key: "noseUp", text: "Nos upp, flare." },
+      { key: "touchSpeed", text: "IAS 58 mph." },
+      { key: "idleSupport", text: "Liiitet stöttning med trotteln. Ljudillustrationer ingår :-)" },
+    ],
+  },
+  {
+    id: "glassyLanding",
+    title: "Glassy Water Landing",
+    items: [
+      { key: "glassyNose", text: "THR NOS UPP, 50 ft kvar." },
+      { key: "glassyFlaps", text: "Flaps 2." },
+      { key: "glassyVs", text: "VS -150 ft/min." },
+      { key: "glassySpeed", text: "IAS 63 mph. Saknas sjunk, sänk farten." },
+      { key: "glassyThrottle", text: "Tumregel: 20 sekunder till vattenkontakt, se skiss." },
+      { key: "glassyAttitude", text: "LAST NOSLÄGE LIGGER VID BLEKE." },
+    ],
+  },
+  {
+    id: "shortTakeoff",
+    title: "Short Takeoff",
+    items: [
+      { key: "avoidStep", text: "Undvik stegtaxning." },
+      { key: "shortFlaps", text: "Flaps 3." },
+      { key: "goScares", text: "Gör S.C.A.R.F.S i svängen. Ova!" },
+      { key: "drag", text: "Skeva dig loss." },
+    ],
+  },
+  {
+    id: "powerOff",
+    title: "Power-off Landing",
+    items: [
+      { key: "powerOffSpeed", text: "<800 ft: landa i konen framåt." },
+      { key: "powerOffFlaps", text: "Flaps 2." },
+      { key: "powerOffFlare", text: "300 ft: öka farten till 80 mph, enklare flare." },
+    ],
+  },
+  {
+    id: "glassyTakeoff",
+    title: "Glassy Water Takeoff",
+    items: [
+      { key: "glassyTakeoffYes", text: "Yes! Du är en fena på blekelandning och tänker inte alls på blekestarten." },
+      { key: "tapNose", text: "Tappa nosen nu och du havererar med full motoreffekt och 10-25 kn högre fart." },
+    ],
+  },
+  {
+    id: "parking",
+    title: "Parking",
+    items: [
+      { key: "waterRudder", text: "Vattenroder UP." },
+      { key: "parkingFlaps", text: "Flaps 3." },
+      { key: "belts", text: "Bälta styrspaken." },
+      { key: "pitot", text: "Pitotrörsskydd PÅ." },
+    ],
+  },
+  {
+    id: "scarfs",
+    title: "S.C.A.R.F.S",
+    items: [
+      { key: "scarfsS", text: "S: Seatbelt, safety vests." },
+      { key: "scarfsC", text: "C: Carb, allt framåt." },
+      { key: "scarfsA", text: "A: Area clear." },
+      { key: "scarfsR", text: "R: Rudder UP." },
+      { key: "scarfsF", text: "F: Flaps." },
+      { key: "scarfsStick", text: "S: Stick back." },
+    ],
+  },
+  {
+    id: "freda",
+    title: "F.R.E.D.A",
+    items: [
+      { key: "fredaFuel", text: "F: Fuel. Se, inte bara titta." },
+      { key: "fredaRadio", text: "R: Radio. Borde jag ha rapporterat Valler?" },
+      { key: "fredaEngine", text: "E: Engine. Betyder oftast magra." },
+      { key: "fredaDirections", text: "D: Directions." },
+      { key: "fredaAltitude", text: "A: Altitude. Klarerad höjd?" },
+    ],
+  },
+  {
+    id: "training",
+    title: "Övningar",
+    items: [
+      { key: "reducedPower", text: "Starta med reducerad effekt, 23-24\"." },
+      { key: "glassyTraining", text: "Blekelandningar: gör var tredje landning enligt blekeprocedur." },
+      { key: "judgement", text: "Bedömningslandning: vid vilken höjd hinner du kurva tillbaka?" },
+      { key: "judgementWarn", text: "Helt OK att stötta med gas om avståndet blir för stort." },
+    ],
+  },
+];
+
 const targets = {
-  takeoff: "Full rik, prop fram, carb heat av, trottel full",
+  takeoff: "Full rik, prop fram, carb heat av, full trottel, rotera och bekräfta positive rate",
   climb: "Håll takeoff power tills farten är stabil",
-  cruise: "23 inHg, 2300 RPM, magra mot peak EGT",
-  approach: "Carb heat på, prop full fram, approach power",
+  climb300: "300 ft: airspeed check, flaps 0, lights off, 24\"/2450",
+  cruise: "21\"/2350, magra mot EGT 1360°F",
+  downwind: "Förvärmning till, reducera, flaps 1, lights on, 75 mph",
+  final: "70 mph, flaps 3, prop in, förvärmning in/av, blandning in",
+  shortFinal: "<300 ft stabiliserad, annars Go Around. Sikta 65 mph",
+  touchdown: "Nos upp, flare, sikta 58 mph",
+  reference: "Specialrutiner och S.C.A.R.F.S/F.R.E.D.A finns i listan",
 };
+
+renderProcedures();
+
+function renderProcedures() {
+  readouts.procedureBody.innerHTML = `
+    <section class="memo-strip" aria-label="Prestandamemo">
+      ${performanceMemo.map((item) => `
+        <div class="memo-item">
+          <span>${item.label}</span>
+          <strong>${item.value}</strong>
+          ${item.note ? `<small>${item.note}</small>` : ""}
+        </div>
+      `).join("")}
+    </section>
+    <ol id="procedure-list" class="procedure-list">
+      ${procedureGroups.map((group) => `
+        <li class="procedure-group" data-group="${group.id}">
+          <h2>${group.title}</h2>
+          <ul>
+            ${group.items.map((item) => `<li data-step="${item.key}">${item.text}</li>`).join("")}
+          </ul>
+        </li>
+      `).join("")}
+    </ol>
+  `;
+  readouts.steps = [...readouts.procedureBody.querySelectorAll("[data-step]")];
+}
 
 controls.carbHeat.addEventListener("click", () => {
   state.carbHeatOn = !state.carbHeatOn;
@@ -304,32 +517,97 @@ function getFlight(engine, dt) {
 
 function classify(engine) {
   const takeoffReady = engine.throttle > 0.92 && engine.prop > 0.92 && engine.mixture > 0.92 && !state.carbHeatOn;
-  const climbDone = state.airborne && state.altitude > 20 && state.speed > 58;
-  const cruiseSet = state.airborne && engine.map > 22.1 && engine.map < 24.1 && engine.rpm > 2220 && engine.rpm < 2380 && engine.mixture > 0.55 && engine.mixture < 0.76 && !state.carbHeatOn;
-  const approachSet = state.airborne && state.carbHeatOn && engine.prop > 0.9 && engine.map < 18.5 && state.verticalSpeed < -120;
+  const airspeedAlive = state.speed > 12;
+  const noseLight = state.speed > 35;
+  const rotateDone = state.airborne && state.altitude > 8;
+  const positiveRate = state.airborne && state.verticalSpeed > 120;
+  const engineGreen = state.airborne && engine.rpm > 2300 && engine.egt > 900;
+  const climb300Done = state.airborne && state.altitude > 300;
+  const climbSet = climb300Done && engine.map > 22.8 && engine.map < 25.5 && engine.rpm > 2360 && engine.rpm < 2530;
+  const cruiseSet = state.airborne && engine.map > 20.2 && engine.map < 22.2 && engine.rpm > 2260 && engine.rpm < 2425 && engine.mixture > 0.55 && engine.mixture < 0.76 && !state.carbHeatOn;
+  const downwindSet = state.airborne && state.carbHeatOn && engine.map < 21.5 && state.speed < 86;
+  const finalSet = state.completed.has("downwindSpeed") && !state.carbHeatOn && engine.prop > 0.9 && engine.mixture > 0.9 && state.speed < 76;
+  const shortFinalSet = finalSet && state.altitude < 300 && state.verticalSpeed < -80;
+  const touchdownSet = !state.airborne && state.completed.has("stable") && state.speed < 62;
 
-  if (takeoffReady) state.completed.add("takeoff");
-  if (climbDone) state.completed.add("climb");
-  if (cruiseSet) state.completed.add("cruise");
-  if (approachSet) state.completed.add("approach");
+  if (takeoffReady) {
+    state.completed.add("takeoffPower");
+    state.completed.add("takeoffObs");
+  }
+  if (airspeedAlive) state.completed.add("airspeedAlive");
+  if (noseLight) state.completed.add("noseLight");
+  if (rotateDone) state.completed.add("rotate");
+  if (positiveRate) state.completed.add("positiveRate");
+  if (engineGreen) state.completed.add("engineGreen");
+  if (climb300Done) {
+    state.completed.add("airspeedCheck");
+    state.completed.add("lightsOff");
+  }
+  if (climbSet) state.completed.add("climbSettings");
+  if (cruiseSet) {
+    state.completed.add("gearUp");
+    state.completed.add("cruisePower");
+    state.completed.add("mixtureCruise");
+  }
+  if (downwindSet) {
+    state.completed.add("preheatTill");
+    state.completed.add("reduceDownwind");
+    state.completed.add("flapsOne");
+    state.completed.add("lightsOn");
+    state.completed.add("downwindSpeed");
+  }
+  if (finalSet) {
+    state.completed.add("finalSpeed");
+    state.completed.add("flapsThree");
+    state.completed.add("propIn");
+    state.completed.add("preheatIn");
+    state.completed.add("landingIn");
+  }
+  if (shortFinalSet) {
+    state.completed.add("under300");
+    state.completed.add("stable");
+    state.completed.add("threshold");
+    state.completed.add("thresholdSpeed");
+  }
+  if (touchdownSet) {
+    state.completed.add("noseUp");
+    state.completed.add("touchSpeed");
+    state.completed.add("idleSupport");
+  }
 
   let phase = "Uppställning";
   let active = "takeoff";
-  if (state.completed.has("takeoff") && !state.airborne) {
+  if (state.completed.has("takeoffPower") && !state.airborne) {
     phase = "Startroll";
-    active = "climb";
+    active = "takeoff";
   }
   if (state.airborne) {
     phase = state.verticalSpeed >= -60 ? "Stigning" : "Inflygning";
-    active = state.completed.has("climb") ? "cruise" : "climb";
+    active = state.altitude < 300 ? "takeoff" : "climb300";
   }
-  if (state.completed.has("cruise")) {
+  if (state.completed.has("climbSettings")) {
+    phase = "Stigning";
+    active = "cruise";
+  }
+  if (state.completed.has("cruisePower")) {
     phase = state.verticalSpeed < -80 ? "Inflygning" : "Planflykt";
-    active = "approach";
+    active = state.verticalSpeed < -80 || state.carbHeatOn ? "downwind" : "cruise";
   }
-  if (state.completed.has("approach")) {
-    phase = "Approach";
-    active = "approach";
+  if (state.completed.has("downwindSpeed")) {
+    phase = "Downwind";
+    active = "final";
+  }
+  if (state.completed.has("finalSpeed")) {
+    phase = "Final";
+    active = "shortFinal";
+  }
+  if (state.completed.has("stable")) {
+    phase = "Short final";
+    active = "touchdown";
+  }
+  if (state.completed.has("touchSpeed")) {
+    phase = "Utrullning";
+    active = "reference";
   }
 
   let power = "Idle";
@@ -348,7 +626,11 @@ function getFeedback(active, engine) {
     if (engine.prop < 0.92) return "Propellerreglaget full fram";
     if (state.carbHeatOn) return "Förgasarvärme av för takeoff";
     if (engine.throttle < 0.92) return "Sätt full trottel";
-    return "Takeoff power satt";
+    if (state.speed < 12) return "Callout: airspeed alive när farten kommer";
+    if (state.speed < 35) return "Fortsätt startroll, avlasta noshjulet vid 40 mph";
+    if (!state.airborne) return "Rotera när flygplanet vill flyga";
+    if (state.verticalSpeed < 120) return "Bekräfta positive rate of climb";
+    return "Takeoff och initial stigning sitter";
   }
 
   if (active === "climb") {
@@ -357,14 +639,55 @@ function getFeedback(active, engine) {
     return "Etablerad stigning";
   }
 
+  if (active === "climb300") {
+    if (state.altitude < 300) return "Fortsätt stig till 300 ft";
+    if (engine.map > 25.5) return "Reducera mot climb power 24 inHg";
+    if (engine.map < 22.8) return "Öka något mot climb power 24 inHg";
+    if (engine.rpm > 2530) return "Reducera prop mot 2450 RPM";
+    if (engine.rpm < 2360) return "Öka prop mot 2450 RPM";
+    return "300 ft-rutin och climb settings sitter";
+  }
+
   if (active === "cruise") {
-    if (engine.map > 24.1) return "Reducera trottel mot 23 inHg";
-    if (engine.map < 22.1) return "Öka trottel något mot 23 inHg";
-    if (engine.rpm > 2380) return "Dra propellerreglaget mot 2300 RPM";
-    if (engine.rpm < 2220) return "Öka propellerreglaget mot 2300 RPM";
+    if (engine.map > 22.2) return "Reducera trottel mot 21 inHg";
+    if (engine.map < 20.2) return "Öka trottel något mot 21 inHg";
+    if (engine.rpm > 2425) return "Dra propellerreglaget mot 2350 RPM";
+    if (engine.rpm < 2260) return "Öka propellerreglaget mot 2350 RPM";
     if (engine.mixture > 0.76) return "Magra tills EGT närmar sig peak";
     if (engine.mixture < 0.55) return "För magert, rika något";
-    return "Cruise power och magring sitter";
+    return "Cruise 21/2350 och magring sitter";
+  }
+
+  if (active === "downwind") {
+    if (!state.carbHeatOn) return "Förvärmning till på medvind";
+    if (engine.map > 21.5) return "Reducera på medvind";
+    if (state.speed > 86) return "Låt farten komma mot 75 mph";
+    return "Downwind-rutinen sitter";
+  }
+
+  if (active === "final") {
+    if (state.speed > 76) return "Fånga finalfarten runt 70 mph";
+    if (engine.prop < 0.9) return "Prop in på final";
+    if (state.carbHeatOn) return "Förvärmning in/av på final";
+    if (engine.mixture < 0.9) return "Blandning in";
+    return "Final-rutinen sitter";
+  }
+
+  if (active === "shortFinal") {
+    if (state.altitude > 300) return "Vänta med short final tills under 300 ft";
+    if (state.verticalSpeed > -80) return "Stabilisera sjunket, annars Go Around";
+    if (state.speed > 70) return "Sikta 65 mph över tröskeln";
+    return "Stabiliserad short final";
+  }
+
+  if (active === "touchdown") {
+    if (state.airborne) return "Nos upp och håll flare";
+    if (state.speed > 62) return "Låt farten blöda mot 58 mph";
+    return "Touchdown-rutinen sitter";
+  }
+
+  if (active === "reference") {
+    return "Repetera specialrutiner och minneslistor";
   }
 
   if (!state.carbHeatOn) return "Carb heat på innan power reduceras";
@@ -406,7 +729,10 @@ function updateReadouts(engine, mode) {
   readouts.steps.forEach((step) => {
     const key = step.dataset.step;
     step.classList.toggle("done", state.completed.has(key));
-    step.classList.toggle("active", key === mode.active && !state.completed.has(key));
+  });
+
+  readouts.procedureBody.querySelectorAll("[data-group]").forEach((group) => {
+    group.classList.toggle("active-group", group.dataset.group === mode.active);
   });
 }
 
